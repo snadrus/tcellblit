@@ -11,6 +11,7 @@ import (
 	_ "image/png"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/snadrus/tcellblit"
 )
 
 func runLoop(s tcell.Screen, image string) {
@@ -19,14 +20,8 @@ func runLoop(s tcell.Screen, image string) {
 		panic(err)
 	}
 
-	//draw(s, img)
-
-	redrawTimer := time.NewTimer(1 * time.Millisecond)
-	go func() {
-		for range redrawTimer.C {
-			blit.Draw(s, img)
-		}
-	}()
+	rx, ry := s.Size()
+	tcellblit.Draw(s, img, rx, ry, true)
 
 	for {
 		ev := s.PollEvent()
@@ -37,7 +32,8 @@ func runLoop(s tcell.Screen, image string) {
 				return
 			}
 		case *tcell.EventResize:
-			redrawTimer.Reset(time.Millisecond * 100)
+			rx, ry = ev.Size()
+			tcellblit.Draw(s, img, rx, ry, true)
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -52,7 +48,6 @@ func main() {
 	} else {
 		fmt.Printf("Usage: %s <filename>...\n\n", os.Args[0])
 		fmt.Println("Close the image with <ESC> or by pressing 'q'.")
-		os.Exit(1)
 	}
 
 	s, err := tcell.NewScreen()
